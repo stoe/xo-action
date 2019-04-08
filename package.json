@@ -1,0 +1,74 @@
+{
+  "name": "xo-action",
+  "version": "1.0.0",
+  "private": true,
+  "description": "GitHub Action ❤️ JavaScript happiness style linter",
+  "keywords": [
+    "xo",
+    "code",
+    "quality",
+    "linter",
+    "github-action"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/stoe/xo-action#readme",
+  "author": "Stefan Stölzle <stefan@github.com> (stefan.stoelzle.me)",
+  "repository": "git+ssh://git@github.com/stoe/xo-action.git",
+  "bugs": {
+    "url": "https://github.com/stoe/xo-action/issues"
+  },
+  "engines": {
+    "node": ">=10.15",
+    "npm": ">=6.4"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "xo"
+  },
+  "dependencies": {
+    "actions-toolkit": "^2.0.0",
+    "xo": "^0.24.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^10.0.1",
+    "eslint": "^5.16.0",
+    "eslint-config-prettier": "^4.1.0",
+    "eslint-config-xo-space": "^0.21.0",
+    "eslint-plugin-prettier": "^3.0.1",
+    "prettier": "^1.16"
+  },
+  "eslintConfig": {
+    "env": {
+      "es6": true,
+      "node": true
+    },
+    "parser": "babel-eslint",
+    "extends": [
+      "prettier"
+    ],
+    "plugins": [
+      "prettier"
+    ],
+    "rules": {
+      "prettier/prettier": [
+        "error",
+        {
+          "singleQuote": true,
+          "semi": true,
+          "useTabs": false,
+          "bracketSpacing": false
+        }
+      ],
+      "camelcase": [
+        "error",
+        {
+          "properties": "never"
+        }
+      ]
+    }
+  },
+  "xo": {
+    "space": true,
+    "prettier": true
+  }
+}
