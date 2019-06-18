@@ -3,14 +3,14 @@ workflow "Test my code" {
   resolves = ["npm test"]
 }
 
-action "npm install" {
+action "npm ci" {
   uses = "docker://node:10-alpine"
   runs = "npm"
-  args = "install"
+  args = "ci"
 }
 
 action "npm test" {
-  needs = "npm install"
+  needs = "npm ci"
   uses = "docker://node:10-alpine"
   runs = "npm"
   args = "test"
