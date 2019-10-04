@@ -7,6 +7,7 @@ const github = require('@actions/github');
 
 const run = async () => {
   const workspace = process.env.GITHUB_WORKSPACE;
+
   try {
     const pkg = require(path.join(workspace, 'package.json'));
     const {sha: head_sha, action: title} = github.context;
@@ -18,36 +19,28 @@ const run = async () => {
     let conclusion = 'success';
     let results = [];
 
-    try {
-      const {eslintConfig, xo = {}} = pkg;
-      const optionsXo = ['--reporter=json'];
+    const {eslintConfig, xo = {}} = pkg;
+    const optionsXo = ['--reporter=json'];
 
-      if (
-        (eslintConfig && eslintConfig.plugins.includes('prettier')) ||
-        xo.prettier
-      ) {
-        optionsXo.push('--prettier');
-      }
-
-      const parseResults = data => {
-        [...results] = JSON.parse(data.toString());
-      };
-
-      const xoPath = path.join(workspace, 'node_modules', '.bin', 'xo');
-      await exec.exec(xoPath, optionsXo, {
-        cwd: workspace,
-        listeners: {
-          stdout: parseResults,
-          stderr: parseResults
-        }
-      });
-    } catch (error) {
-      // Non xo error
-      if (!error.stdout) {
-        // Let's just error out so the user can try and fix it
-        core.setFailed(error.message);
-      }
+    if (
+      (eslintConfig && eslintConfig.plugins.includes('prettier')) ||
+      xo.prettier
+    ) {
+      optionsXo.push('--prettier');
     }
+
+    const parseResults = data => {
+      [...results] = JSON.parse(data.toString());
+    };
+
+    const xoPath = path.join(workspace, 'node_modules', '.bin', 'xo');
+    await exec.exec(xoPath, optionsXo, {
+      cwd: workspace,
+      listeners: {
+        stdout: parseResults,
+        stderr: parseResults
+      }
+    });
 
     for (const result of results) {
       const {filePath, messages} = result;
