@@ -37,7 +37,10 @@ const updateCheck = async ({summary, conclusion, annotations}) => {
 
   const checkRunId = await client.checks
     .listForRef({owner, repo, ref})
-    .then(checkList => checkList.data.check_runs[0].id);
+    .then(checkList => {
+      console.info(checkList);
+      return checkList.data.check_runs[0].id;
+    });
 
   await client.checks.update({
     ...github.context.repo,
@@ -131,12 +134,14 @@ const run = async () => {
     }
 
     if (warningCount > 0) {
-      summary.push(`:warning: Found ${warningCount} warnings.`);
+      summary.push(
+        `:warning: Found ${warningCount} warning${warningCount !== 1 && 's'}.`
+      );
       conclusion = 'neutral';
     }
 
     if (errorCount > 0) {
-      summary.push(`:x: Found ${errorCount} errors.`);
+      summary.push(`:x: Found ${errorCount} error${errorCount !== 1 && 's'}.`);
       conclusion = 'failure';
     }
 
@@ -152,8 +157,8 @@ const run = async () => {
     if (warningCount > 0) {
       // Currently doesn't work
       // See https://github.com/actions/toolkit/tree/master/packages/core#exit-codes
-      // core.setNeutral(':x: Lint warnings found!');
-      core.warning(':x: Lint warnings found!');
+      // core.setNeutral(':x: Lint warnings found.');
+      core.warning(':x: Lint warnings found.');
       return;
     }
 
