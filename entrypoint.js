@@ -104,8 +104,7 @@ const run = async () => {
     }
 
     try {
-      const repoToken = core.getInput('repo-token', {required: true});
-      const client = new github.GitHub(repoToken);
+      const client = new github.GitHub(process.env.GITHUB_TOKEN);
       const {owner, repo} = github.context.repo;
       const {ref} = github.context;
 
