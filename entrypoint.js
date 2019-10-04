@@ -135,13 +135,17 @@ const run = async () => {
 
     if (warningCount > 0) {
       summary.push(
-        `:warning: Found ${warningCount} warning${warningCount !== 1 && 's'}.`
+        `:warning: Found ${warningCount} warning${
+          warningCount !== 1 ? 's' : ''
+        }.`
       );
       conclusion = 'neutral';
     }
 
     if (errorCount > 0) {
-      summary.push(`:x: Found ${errorCount} error${errorCount !== 1 && 's'}.`);
+      summary.push(
+        `:x: Found ${errorCount} error${errorCount !== 1 ? 's' : ''}.`
+      );
       conclusion = 'failure';
     }
 
