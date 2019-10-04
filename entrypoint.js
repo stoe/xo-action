@@ -19,6 +19,7 @@ const runXo = async options =>
 
   await exec.exec(xoPath, options, {
     cwd: workspace,
+    ignoreReturnCode: true,
     listeners: {
       stdout: parseResults,
       stderr: parseResults
