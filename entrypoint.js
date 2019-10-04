@@ -104,13 +104,18 @@ const run = async () => {
     }
 
     try {
-      const githubClient = new github.GitHub(
-        core.getInput('repo-token', {required: true})
-      );
+      const repoToken = core.getInput('repo-token', {required: true});
+      const client = new github.GitHub(repoToken);
+      const {owner, repo} = github.context.repo;
+      const {ref} = github.context;
 
-      await githubClient.checks.create({
+      const checkRunId = await client.checks
+        .listForRef({owner, repo, ref})
+        .then(checkList => checkList.data.check_runs[0].id);
+
+      await client.checks.create({
         ...github.context.repo,
-        name: 'xo',
+        check_run_id: checkRunId,
         head_sha,
         completed_at: new Date().toISOString(),
         conclusion,
