@@ -8,7 +8,8 @@ const github = require('@actions/github');
 const workspace = process.env.GITHUB_WORKSPACE;
 
 // Returns results from xo command
-const runXo = async options => {
+const runXo = async options =>
+{
   const xoPath = path.join(workspace, 'node_modules', '.bin', 'xo');
   let results = [];
 
