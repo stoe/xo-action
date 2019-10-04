@@ -28,7 +28,11 @@ Toolkit.run(async tools => {
     [...results] = JSON.parse(result.stdout);
   } catch (error) {
     // XO will respond with a rejected Promise if errors/warnings are found
-    [...results] = JSON.parse(error.stdout);
+    try {
+      [...results] = JSON.parse(error.stdout);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   for (const result of results) {
