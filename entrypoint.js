@@ -17,6 +17,10 @@ Toolkit.run(async tools => {
     const {eslintConfig, xo} = pkg;
     const optionsXo = ['--reporter=json'];
 
+    if (!xo) {
+      tools.exit.failure(new Error('No "xo" field found in package.json'));
+    }
+
     if ((eslintConfig && eslintConfig.plugins.includes('prettier')) || xo.prettier) {
       optionsXo.push('--prettier');
     }
@@ -29,8 +33,8 @@ Toolkit.run(async tools => {
   } catch (error) {
     // Non xo error
     if (!error.stdout) {
-      // Let's just print out so the user can try and fix it
-      console.error(error);
+      // Let's just error out so the user can try and fix it
+      tools.exit.failure(error);
     }
 
     // XO will respond with a rejected Promise if errors/warnings are found
