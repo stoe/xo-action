@@ -38,7 +38,7 @@ const updateCheck = async ({summary, conclusion, annotations}) => {
   const checkRunId = await client.checks
     .listForRef({owner, repo, ref})
     .then(checkList => {
-      console.info(JSON.stringify(checkList.check_runs, null, 2));
+      console.info(JSON.stringify(checkList.data.check_runs, null, 2));
       return checkList.data.check_runs[0].id;
     });
 
