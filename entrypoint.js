@@ -35,12 +35,15 @@ const updateCheck = async ({summary, conclusion, annotations}) => {
   const {sha: head_sha, action: title, ref} = github.context;
   const {owner, repo} = github.context.repo;
 
+  console.log({action: github.context.action});
+
   const checkRunId = await client.checks
     .listForRef({owner, repo, ref})
     .then(({data}) => {
       const check = data.check_runs.find(check => {
         return check.name === github.context.action;
       });
+      console.log({checkRuns: data.check_runs, check});
       return check.id;
     });
 
