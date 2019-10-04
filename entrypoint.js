@@ -5,42 +5,80 @@ const core = require('@actions/core');
 const exec = require('@actions/exec');
 const github = require('@actions/github');
 
-const run = async () => {
-  const workspace = process.env.GITHUB_WORKSPACE;
+const workspace = process.env.GITHUB_WORKSPACE;
 
+// Returns results from xo command
+const runXo = async options => {
+  const xoPath = path.join(workspace, 'node_modules', '.bin', 'xo');
+  let results = [];
+
+  const parseResults = data => {
+    [...results] = JSON.parse(data.toString());
+  };
+
+  await exec.exec(xoPath, options, {
+    cwd: workspace,
+    listeners: {
+      stdout: parseResults,
+      stderr: parseResults
+    }
+  });
+
+  return results;
+};
+
+const updateCheck = async ({summary, conclusion, annotations}) => {
+  const client = new github.GitHub(process.env.GITHUB_TOKEN);
+  const {sha: head_sha, action: title, ref} = github.context;
+  const {owner, repo} = github.context.repo;
+
+  const checkRunId = await client.checks
+    .listForRef({owner, repo, ref})
+    .then(checkList => checkList.data.check_runs[0].id);
+
+  await client.checks.update({
+    ...github.context.repo,
+    check_run_id: checkRunId,
+    head_sha,
+    completed_at: new Date().toISOString(),
+    conclusion,
+    output: {
+      title,
+      summary:
+        conclusion === 'success'
+          ? 'XO found no lint in your code.'
+          : 'XO found lint in your code.',
+      text:
+        conclusion === 'success'
+          ? ':tada: XO found no lint in your code.'
+          : summary.join('\n'),
+      annotations
+    }
+  });
+};
+
+const run = async () => {
   try {
-    const pkg = require(path.join(workspace, 'package.json'));
-    const {sha: head_sha, action: title} = github.context;
     const annotations = [];
     const summary = [];
 
     let warningCount = 0;
     let errorCount = 0;
     let conclusion = 'success';
-    let results = [];
 
-    const {eslintConfig, xo = {}} = pkg;
-    const optionsXo = ['--reporter=json'];
+    const pkgPath = path.join(workspace, 'package.json');
+    const {eslintConfig = {}, xo = {}} = require(pkgPath);
 
-    if (
+    // Only run with prettier flag if needed
+    const needsPrettier =
       (eslintConfig && eslintConfig.plugins.includes('prettier')) ||
-      xo.prettier
-    ) {
-      optionsXo.push('--prettier');
-    }
+      xo.prettier;
 
-    const parseResults = data => {
-      [...results] = JSON.parse(data.toString());
-    };
-
-    const xoPath = path.join(workspace, 'node_modules', '.bin', 'xo');
-    await exec.exec(xoPath, optionsXo, {
-      cwd: workspace,
-      listeners: {
-        stdout: parseResults,
-        stderr: parseResults
-      }
-    });
+    // Run xo command
+    const results = await runXo([
+      '--reporter=json',
+      needsPrettier ? '--prettier' : ''
+    ]);
 
     for (const result of results) {
       const {filePath, messages} = result;
@@ -50,11 +88,11 @@ const run = async () => {
 
       for (const msg of messages) {
         const {severity, ruleId: raw_details} = msg;
-        let {line, endLine, message} = msg;
+        let {line, endLine} = msg;
         let annotation_level;
 
         // Sanity checks
-        message = message.replace(/["']/g, '`');
+        let message = msg.message.replace(/["']/g, '`');
         if (encodeURI(message).split(/%..|./).length - 1 >= 64) {
           message = message.substring(0, 60) + '...';
         }
@@ -97,43 +135,7 @@ const run = async () => {
       conclusion = 'failure';
     }
 
-    try {
-      const client = new github.GitHub(process.env.GITHUB_TOKEN);
-      const {owner, repo} = github.context.repo;
-      const {ref} = github.context;
-
-      const checkRunId = await client.checks
-        .listForRef({owner, repo, ref})
-        .then(checkList => checkList.data.check_runs[0].id);
-
-      await client.checks.update({
-        ...github.context.repo,
-        check_run_id: checkRunId,
-        head_sha,
-        completed_at: new Date().toISOString(),
-        conclusion,
-        output: {
-          title,
-          summary:
-            conclusion === 'success'
-              ? 'XO found no lint in your code.'
-              : 'XO found lint in your code.',
-          text:
-            conclusion === 'success'
-              ? ':tada: XO found no lint in your code.'
-              : summary.join('\n'),
-          annotations
-        }
-      });
-    } catch (error) {
-      // <Debug>
-      core.debug(error);
-      console.trace(error);
-      console.debug(error.request.request.validate);
-      // </Debug>
-
-      core.setFailed(error);
-    }
+    await updateCheck({summary, conclusion, annotations});
 
     if (errorCount > 0) {
       core.setFailed(':x: Lint errors found!');
