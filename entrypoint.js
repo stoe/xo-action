@@ -4,6 +4,7 @@ const path = require('path');
 const core = require('@actions/core');
 const exec = require('@actions/exec');
 const github = require('@actions/github');
+const io = require('@actions/io');
 
 const run = async () => {
   const workspace = process.env.GITHUB_WORKSPACE;

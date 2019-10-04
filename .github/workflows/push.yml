@@ -19,7 +19,7 @@ jobs:
       uses: docker://node:10-alpine
       with:
         entrypoint: npm
-        args: lint
+        args: run lint
 
   test:
     name: Test action against own code
