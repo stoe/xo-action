@@ -112,7 +112,7 @@ const run = async () => {
         .listForRef({owner, repo, ref})
         .then(checkList => checkList.data.check_runs[0].id);
 
-      await client.checks.create({
+      await client.checks.update({
         ...github.context.repo,
         check_run_id: checkRunId,
         head_sha,
