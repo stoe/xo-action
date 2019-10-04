@@ -1,138 +1,152 @@
-/* eslint-disable camelcase */
+const path = require('path');
+const core = require('@actions/core');
+const exec = require('@actions/exec');
+const github = require('@actions/github');
 
-const {Toolkit} = require('actions-toolkit');
+const run = async () => {
+	const workspace = process.env.GITHUB_WORKSPACE;
+	try {
+		const pkg = require(path.join(workspace, 'package.json'));
+		const { sha: head_sha, action: title } = github.context;
+		const annotations = [];
+		const summary = [];
 
-Toolkit.run(async tools => {
-  const pkg = tools.getPackageJSON();
-  const {sha: head_sha, action: title} = tools.context;
-  const annotations = [];
-  const summary = [];
+		let warningCount = 0;
+		let errorCount = 0;
+		let conclusion = 'success';
+		let results = [];
 
-  let warningCount = 0;
-  let errorCount = 0;
-  let conclusion = 'success';
-  let results;
+		try {
+			const { eslintConfig, xo = {} } = pkg;
+			const optionsXo = ['--reporter=json'];
 
-  try {
-    const {eslintConfig, xo = {}} = pkg;
-    const optionsXo = ['--reporter=json'];
+			if ((eslintConfig && eslintConfig.plugins.includes('prettier')) || xo.prettier) {
+				optionsXo.push('--prettier');
+			}
 
-    if ((eslintConfig && eslintConfig.plugins.includes('prettier')) || xo.prettier) {
-      optionsXo.push('--prettier');
-    }
+			const parseResults = data => {
+				[...results] = JSON.parse(data.toString());
+			};
 
-    const result = await tools.runInWorkspace('xo', optionsXo, {
-      reject: false
-    });
+			await exec.exec('xo', optionsXo, {
+				cwd: workspace,
+				listeners: {
+					stdout: parseResults,
+					stderr: parseResults
+				}
+			});
+		} catch (error) {
+			// Non xo error
+			if (!error.stdout) {
+				// Let's just error out so the user can try and fix it
+				core.setFailed(error.message);
+			}
+		}
 
-    [...results] = JSON.parse(result.stdout);
-  } catch (error) {
-    // Non xo error
-    if (!error.stdout) {
-      // Let's just error out so the user can try and fix it
-      tools.exit.failure(error);
-    }
+		for (const result of results) {
+			const { filePath, messages } = result;
 
-    // XO will respond with a rejected Promise if errors/warnings are found
-    [...results] = JSON.parse(error.stdout);
-  }
+			warningCount += Number(result.warningCount);
+			errorCount += Number(result.errorCount);
 
-  for (const result of results) {
-    const {filePath, messages} = result;
+			for (const msg of messages) {
+				const { severity, ruleId: raw_details } = msg;
+				let { line, endLine, message } = msg;
+				let annotation_level;
 
-    warningCount += Number(result.warningCount);
-    errorCount += Number(result.errorCount);
+				// Sanity checks
+				message = message.replace(/["']/g, '`');
+				if (encodeURI(message).split(/%..|./).length - 1 >= 64) {
+					message = message.substring(0, 60) + '...';
+				}
 
-    for (const msg of messages) {
-      const {severity, ruleId: raw_details} = msg;
-      let {line, endLine, message} = msg;
-      let annotation_level;
+				switch (severity) {
+					case 1:
+						annotation_level = 'warning';
+						break;
+					case 2:
+						annotation_level = 'failure';
+						break;
+					default:
+						annotation_level = 'notice';
+				}
 
-      // Sanity checks
-      message = message.replace(/["']/g, '`');
-      if (encodeURI(message).split(/%..|./).length - 1 >= 64) {
-        message = message.substring(0, 60) + '...';
-      }
+				line = line || 1;
+				if (endLine < line || !endLine) {
+					endLine = line;
+				}
+				// EO - Sanity checks
 
-      switch (severity) {
-        case 1:
-          annotation_level = 'warning';
-          break;
-        case 2:
-          annotation_level = 'failure';
-          break;
-        default:
-          annotation_level = 'notice';
-      }
+				annotations.push({
+					path: filePath.replace(`${workspace}/`, ''),
+					start_line: line,
+					end_line: endLine,
+					annotation_level,
+					message,
+					raw_details
+				});
+			}
+		}
 
-      line = line || 1;
-      if (endLine < line || !endLine) {
-        endLine = line;
-      }
-      // EO - Sanity checks
+		if (warningCount > 0) {
+			summary.push(`:warning: Found ${warningCount} warnings.`);
+			conclusion = 'neutral';
+		}
 
-      annotations.push({
-        path: filePath.replace(`${tools.workspace}/`, ''),
-        start_line: line,
-        end_line: endLine,
-        annotation_level,
-        message,
-        raw_details
-      });
-    }
-  }
+		if (errorCount > 0) {
+			summary.push(`:x: Found ${errorCount} errors.`);
+			conclusion = 'failure';
+		}
 
-  if (warningCount > 0) {
-    summary.push(`:warning: Found ${warningCount} warnings.`);
-    conclusion = 'neutral';
-  }
+		try {
+			const githubClient = new github.GitHub(core.getInput("repo-token", { required: true }));
 
-  if (errorCount > 0) {
-    summary.push(`:x: Found ${errorCount} errors.`);
-    conclusion = 'failure';
-  }
+			await githubClient.checks.create({
+				...github.context.repo,
+				name: 'xo',
+				head_sha,
+				completed_at: new Date().toISOString(),
+				conclusion,
+				output: {
+					title,
+					summary:
+						conclusion === 'success'
+							? 'XO found no lint in your code.'
+							: 'XO found lint in your code.',
+					text:
+						conclusion === 'success'
+							? ':tada: XO found no lint in your code.'
+							: summary.join('\n'),
+					annotations
+				}
+			});
+		} catch (error) {
+			// <Debug>
+			core.debug(error);
+			console.trace(error);
+			console.debug(error.request.request.validate);
+			// </Debug>
 
-  try {
-    const optionsCreate = {
-      ...tools.context.repo,
-      name: 'xo',
-      head_sha,
-      completed_at: new Date().toISOString(),
-      conclusion,
-      output: {
-        title,
-        summary:
-          conclusion === 'success'
-            ? 'XO found no lint in your code.'
-            : 'XO found lint in your code.',
-        text:
-          conclusion === 'success'
-            ? ':tada: XO found no lint in your code.'
-            : summary.join('\n'),
-        annotations
-      }
-    };
+			core.setFailed(error);
+		}
 
-    await tools.github.checks.create(optionsCreate);
-  } catch (error) {
-    // <Debug>
-    tools.log.debug(error);
-    console.trace(error);
-    console.debug(error.request.request.validate);
-    // </Debug>
+		if (errorCount > 0) {
+			core.setFailed(':x: Lint errors found!');
+			return;
+		}
 
-    tools.exit.failure(error);
-  }
+		if (warningCount > 0) {
+			// Currently doesn't work
+			// See https://github.com/actions/toolkit/tree/master/packages/core#exit-codes
+			// core.setNeutral(':x: Lint errors found!');
+			core.warning(':x: Lint errors found!');
+			return;
+		}
 
-  if (errorCount > 0) {
-    tools.exit.failure(':x: Lint errors found!');
-    return;
-  }
+		// tools.exit.success(':white_check_mark: No lint found!');
+	} catch (error) {
+		core.setFailed(error.message);
+	}
+};
 
-  if (warningCount > 0) {
-    tools.exit.neutral(':warning: Lint warnings found!');
-    return;
-  }
-
-  tools.exit.success(':white_check_mark: No lint found!');
-});
+run();

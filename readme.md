@@ -4,13 +4,13 @@
 
 
 ## Usage
-To use the action simply add the following lines to your `.github/main.workflow`.
+To use the action simply add the following lines to your `.github/workflows/main.yml`.
 
-```hcl
-action "xo" {
-  uses = "stoe/xo-action@master"
-  secrets = ["GITHUB_TOKEN"]
-}
+```yaml
+- name: xo
+  uses: stoe/xo-action@master
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 
