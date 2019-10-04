@@ -17,7 +17,7 @@ Toolkit.run(async tools => {
     const {eslintConfig, xo} = pkg;
     const optionsXo = ['--reporter=json'];
 
-    if (eslintConfig.plugins.includes('prettier') || xo.prettier) {
+    if ((eslintConfig && eslintConfig.plugins.includes('prettier')) || xo.prettier) {
       optionsXo.push('--prettier');
     }
 
@@ -27,8 +27,13 @@ Toolkit.run(async tools => {
 
     [...results] = JSON.parse(result.stdout);
   } catch (error) {
+    // Non xo error
+    if (!error.stdout) {
+      // Let's just print out so the user can try and fix it
+      console.error(error);
+    }
+
     // XO will respond with a rejected Promise if errors/warnings are found
-    console.error(error);
     [...results] = JSON.parse(error.stdout);
   }
 
