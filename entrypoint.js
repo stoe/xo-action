@@ -11,7 +11,7 @@ Toolkit.run(async tools => {
   let warningCount = 0;
   let errorCount = 0;
   let conclusion = 'success';
-  let results;
+  let results = [];
 
   try {
     const {eslintConfig, xo} = pkg;
@@ -25,14 +25,10 @@ Toolkit.run(async tools => {
       reject: false
     });
 
-    [...results] = JSON.parse(result.stdout);
+    results = JSON.parse(result.stdout);
   } catch (error) {
     // XO will respond with a rejected Promise if errors/warnings are found
-    try {
-      [...results] = JSON.parse(error.stdout);
-    } catch (error) {
-      console.error(error);
-    }
+    results = JSON.parse(error.stdout);
   }
 
   for (const result of results) {
