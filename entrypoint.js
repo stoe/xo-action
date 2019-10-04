@@ -33,7 +33,8 @@ const run = async () => {
         [...results] = JSON.parse(data.toString());
       };
 
-      await exec.exec('xo', optionsXo, {
+      const xoPath = await io.which('xo', true);
+      await exec.exec(xoPath, optionsXo, {
         cwd: workspace,
         listeners: {
           stdout: parseResults,

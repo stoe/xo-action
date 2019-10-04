@@ -23,7 +23,7 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "xo"
+    "lint": "xo"
   },
   "dependencies": {
     "@actions/core": "^1.1.3",
