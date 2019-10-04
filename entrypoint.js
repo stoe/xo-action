@@ -20,6 +20,7 @@ const runXo = async options =>
   await exec.exec(xoPath, options, {
     cwd: workspace,
     ignoreReturnCode: true,
+    silent: true,
     listeners: {
       stdout: parseResults,
       stderr: parseResults
@@ -80,7 +81,9 @@ const run = async () => {
     const results = await runXo([
       '--reporter=json',
       needsPrettier ? '--prettier' : ''
-    ]);
+    ]).catch(error => {
+      core.setFailed(error.message);
+    });
 
     for (const result of results) {
       const {filePath, messages} = result;
@@ -137,7 +140,9 @@ const run = async () => {
       conclusion = 'failure';
     }
 
-    await updateCheck({summary, conclusion, annotations});
+    await updateCheck({summary, conclusion, annotations}).catch(error => {
+      core.setFailed(error.message);
+    });
 
     if (errorCount > 0) {
       core.setFailed(':x: Lint errors found!');
@@ -147,8 +152,8 @@ const run = async () => {
     if (warningCount > 0) {
       // Currently doesn't work
       // See https://github.com/actions/toolkit/tree/master/packages/core#exit-codes
-      // core.setNeutral(':x: Lint errors found!');
-      core.warning(':x: Lint errors found!');
+      // core.setNeutral(':x: Lint warnings found!');
+      core.warning(':x: Lint warnings found!');
       return;
     }
 
