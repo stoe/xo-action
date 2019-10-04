@@ -14,12 +14,8 @@ Toolkit.run(async tools => {
   let results;
 
   try {
-    const {eslintConfig, xo} = pkg;
+    const {eslintConfig, xo = {}} = pkg;
     const optionsXo = ['--reporter=json'];
-
-    if (!xo) {
-      tools.exit.failure(new Error('No "xo" field found in package.json'));
-    }
 
     if ((eslintConfig && eslintConfig.plugins.includes('prettier')) || xo.prettier) {
       optionsXo.push('--prettier');
