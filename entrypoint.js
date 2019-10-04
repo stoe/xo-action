@@ -35,7 +35,7 @@ const updateCheck = async ({summary, conclusion, annotations}) => {
   const {sha: head_sha, action: title, ref} = github.context;
   const {owner, repo} = github.context.repo;
 
-  console.log({action: github.context.action});
+  console.log({context: github.context});
 
   const checkRunId = await client.checks
     .listForRef({owner, repo, ref})
