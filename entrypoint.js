@@ -43,7 +43,7 @@ const updateCheck = async ({summary, conclusion, annotations}) => {
       const check = data.check_runs.find(check => {
         return check.name === github.context.action;
       });
-      console.log({checkRuns: data.check_runs, check});
+      console.log(JSON.stringify({checkRuns: data.check_runs, check}, null, 2));
       return check.id;
     });
 
