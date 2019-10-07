@@ -10,10 +10,10 @@ const workspace = process.env.GITHUB_WORKSPACE;
 // Returns results from xo command
 const runXo = async options => {
   const xoPath = path.join(workspace, 'node_modules', '.bin', 'xo');
-  let results = [];
+  let resultString = '';
 
   const parseResults = data => {
-    [...results] = JSON.parse(data.toString());
+    resultString += data.toString();
   };
 
   await exec.exec(xoPath, options, {
@@ -26,7 +26,7 @@ const runXo = async options => {
     }
   });
 
-  return results;
+  return JSON.parse(resultString);
 };
 
 const updateCheck = async ({summary, conclusion, annotations}) => {
