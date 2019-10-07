@@ -42,11 +42,25 @@ const updateCheck = async ({summary, conclusion, annotations}) => {
   // User must provide the check run's name
   // so we can match it up with the correct run
   const checkName = core.getInput('check_name') || 'lint';
-  const checkNameRun = checkRuns.find(check => check.name === checkName);
+  let checkNameRun = checkRuns.find(check => check.name === checkName);
 
   // Bail if we have more than one check and there's no named run found
   if (checkRuns.length >= 2 && !checkNameRun) {
-    core.setFailed(`Couldn't find a check run matching "${checkName}".`);
+    core.debug(`Couldn't find a check run matching "${checkName}".`);
+
+    // Create new check run as we couldn't find a matching one.
+    await client.checks.create({
+      ...github.context.repo,
+      name: checkName,
+      head_sha,
+      started_at: new Date().toISOString()
+    });
+
+    const checkRuns = await client.checks
+      .listForRef({owner, repo, ref})
+      .then(({data}) => data.check_runs);
+
+    checkNameRun = checkRuns.find(check => check.name === checkName);
   }
 
   const checkRunId = checkRuns.length >= 2 ? checkNameRun.id : checkRuns[0].id;
