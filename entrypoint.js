@@ -79,7 +79,7 @@ const updateCheck = async ({summary, conclusion, annotations}) => {
         conclusion === 'success'
           ? ':tada: XO found no lint in your code.'
           : summary.join('\n'),
-      annotations
+      annotations: annotations.slice(0, 49)
     }
   });
 };
