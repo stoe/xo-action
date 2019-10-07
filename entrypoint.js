@@ -35,22 +35,20 @@ const updateCheck = async ({summary, conclusion, annotations}) => {
   const {sha: head_sha, action: title, ref} = github.context;
   const {owner, repo} = github.context.repo;
 
-  console.log({context: github.context});
-
-  const checkRunId = await client.checks
+  const checkRuns = await client.checks
     .listForRef({owner, repo, ref})
-    .then(({data}) => {
-      const check = data.check_runs.find(check => {
-        return check.name === github.context.action;
-      });
-      console.log(JSON.stringify({checkRuns: data.check_runs, check}, null, 2));
-      return check.id;
-    });
+    .then(({data}) => data.check_runs);
+
+  // User must provide the check run's name
+  // so we can match it up with the correct run
+
+  const checkName = core.getInput('check_name') || 'lint';
+  const checkNameRun = checkRuns.find(check => check.name === checkName);
+  const checkRunId = checkRuns.length >= 2 ? checkNameRun.id : checkRuns[0].id;
 
   await client.checks.update({
     ...github.context.repo,
     check_run_id: checkRunId,
-    head_sha,
     completed_at: new Date().toISOString(),
     conclusion,
     output: {
@@ -82,7 +80,9 @@ const run = async () => {
 
     // Only run with prettier flag if needed
     const needsPrettier =
-      (eslintConfig && eslintConfig.plugins.includes('prettier')) ||
+      (eslintConfig &&
+        eslintConfig.plugins &&
+        eslintConfig.plugins.includes('prettier')) ||
       xo.prettier;
 
     // Run xo command
@@ -91,6 +91,7 @@ const run = async () => {
       needsPrettier ? '--prettier' : ''
     ]).catch(error => {
       core.setFailed(error.message);
+      return [];
     });
 
     for (const result of results) {

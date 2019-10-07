@@ -38,3 +38,5 @@ jobs:
       uses: omgimalexis/xo-action@master
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        check_name: test
