@@ -39,4 +39,4 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        check_name: test
+        check_name: Test action against own code
