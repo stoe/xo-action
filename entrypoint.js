@@ -160,7 +160,7 @@ const run = async () => {
     if (warningCount > 0) {
       summary.push(
         `:warning: Found ${warningCount} warning${
-          warningCount !== 1 ? 's' : ''
+          warningCount === 1 ? '' : 's'
         }.`
       );
       conclusion = 'neutral';
@@ -168,7 +168,7 @@ const run = async () => {
 
     if (errorCount > 0) {
       summary.push(
-        `:x: Found ${errorCount} error${errorCount !== 1 ? 's' : ''}.`
+        `:x: Found ${errorCount} error${errorCount === 1 ? '' : 's'}.`
       );
       conclusion = 'failure';
     }
