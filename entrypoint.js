@@ -10,7 +10,7 @@ const workspace = process.env.GITHUB_WORKSPACE;
 const xoPath = path.join(workspace, 'node_modules', '.bin', 'xo');
 
 const fixXoForChildProcess = async () => {
-  const cliMainPath = path.join(path.dirname(fs.realpathSync('../xo-action/node_modules/.bin/xo')), 'cli-main.js')
+  const cliMainPath = path.join(path.dirname(fs.realpathSync(xoPath)), 'cli-main.js')
   fs.writeFileSync(cliMainPath, fs.readFileSync(cliMainPath).toString().replace('process.exit(report.errorCount === 0 ? 0 : 1);', 'process.exitCode = (report.errorCount === 0 ? 0 : 1);'));
 };
 
@@ -110,7 +110,7 @@ const run = async () => {
       xo.prettier;
 
     // Fix xo command before running command
-    awiat fixXoForChildProcess();
+    await fixXoForChildProcess();
 
     // Run xo command
     const results = await runXo([
