@@ -1,15 +1,21 @@
 /* eslint-disable camelcase */
 
+const fs = require('fs');
 const path = require('path');
 const core = require('@actions/core');
 const exec = require('@actions/exec');
 const github = require('@actions/github');
 
 const workspace = process.env.GITHUB_WORKSPACE;
+const xoPath = path.join(workspace, 'node_modules', '.bin', 'xo');
+
+const fixXoForChildProcess = async () => {
+  const cliMainPath = path.join(path.dirname(fs.realpathSync('../xo-action/node_modules/.bin/xo')), 'cli-main.js')
+  fs.writeFileSync(cliMainPath, fs.readFileSync(cliMainPath).toString().replace('process.exit(report.errorCount === 0 ? 0 : 1);', 'process.exitCode = (report.errorCount === 0 ? 0 : 1);'));
+};
 
 // Returns results from xo command
 const runXo = async options => {
-  const xoPath = path.join(workspace, 'node_modules', '.bin', 'xo');
   let resultString = '';
 
   const parseResults = data => {
@@ -102,6 +108,9 @@ const run = async () => {
         eslintConfig.plugins &&
         eslintConfig.plugins.includes('prettier')) ||
       xo.prettier;
+
+    // Fix xo command before running command
+    awiat fixXoForChildProcess();
 
     // Run xo command
     const results = await runXo([
