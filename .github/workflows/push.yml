@@ -31,9 +31,9 @@ jobs:
         with:
           version: ${{ matrix.node }}
       - run: npm ci
-      # uses: stoe/xo-action@master
       - name: Lint
-        uses: stoe/laughing-umbrella@stoe/testing
+        # uses: stoe/xo-action@master
+        uses: stoe/laughing-umbrella@OmgImAlexis-master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
