@@ -35,7 +35,7 @@ jobs:
 
     # uses: stoe/xo-action@master
     - name: Lint
-      uses: omgimalexis/xo-action@master
+      uses: stoe/laughing-umbrella
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
