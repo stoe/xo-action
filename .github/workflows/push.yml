@@ -8,35 +8,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@master
-    - name: Install deps
-      uses: docker://node:10-alpine
-      with:
-        entrypoint: npm
-        args: ci
+      - uses: actions/checkout@master
+      - name: Install deps
+        uses: docker://node:10-alpine
+        with:
+          entrypoint: npm
+          args: ci
 
-    - name: Lint
-      uses: docker://node:10-alpine
-      with:
-        entrypoint: npm
-        args: run lint
+      - name: Lint
+        uses: docker://node:10-alpine
+        with:
+          entrypoint: npm
+          args: run lint
 
   test:
     name: Test action against own code
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@master
-    - name: Install deps
-      uses: docker://node:10-alpine
-      with:
-        entrypoint: npm
-        args: ci
+      - uses: actions/checkout@master
+      - name: Install deps
+        uses: docker://node:10-alpine
+        with:
+          entrypoint: npm
+          args: ci
 
-    # uses: stoe/xo-action@master
-    - name: Lint
-      uses: stoe/laughing-umbrella
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        check_name: Test action against own code
+      # uses: stoe/xo-action@master
+      - name: Lint
+        uses: stoe/laughing-umbrella@stoe/testing
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          check_name: Test action against own code
