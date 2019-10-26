@@ -4,35 +4,33 @@ on: push
 
 jobs:
   lint:
-    name: Lint code
+    name: Lint code on Node v${{ matrix.node }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['10', '12']
 
     steps:
       - uses: actions/checkout@master
-      - name: Install deps
-        uses: docker://node:10-alpine
+      - uses: actions/setup-node@master
         with:
-          entrypoint: npm
-          args: ci
-
-      - name: Lint
-        uses: docker://node:10-alpine
-        with:
-          entrypoint: npm
-          args: run lint
+          version: ${{ matrix.node }}
+      - run: npm ci
+      - run: npm run lint
 
   test:
-    name: Test action against own code
+    name: Test action against own code on Node v${{ matrix.node }}
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['10', '12']
 
     steps:
       - uses: actions/checkout@master
-      - name: Install deps
-        uses: docker://node:10-alpine
+      - uses: actions/setup-node@master
         with:
-          entrypoint: npm
-          args: ci
-
+          version: ${{ matrix.node }}
+      - run: npm ci
       # uses: stoe/xo-action@master
       - name: Lint
         uses: stoe/laughing-umbrella@stoe/testing
