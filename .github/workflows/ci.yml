@@ -22,7 +22,7 @@ jobs:
         id: node-cache
         with:
           path: node_modules
-          key: ${{ matrix.node }}-${{ hashFiles('package-lock.json') }}
+          key: ${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
       - name: Build
         run: npm ci --ignore-scripts --pure-lockfile
         if: steps.node-cache.outputs.cache-hit != 'true'
