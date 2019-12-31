@@ -10,6 +10,7 @@ LABEL "homepage"="https://github.com/stoe/xo-action"
 LABEL "maintainer"="Stefan Stölzle <stefan@github.com>"
 
 COPY package*.json ./
+RUN npm --global install xo
 RUN npm ci
 COPY . .
 
