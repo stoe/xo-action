@@ -1,0 +1,10 @@
+name: "xo-action"
+description: "GitHub Action ❤️ JavaScript happiness style linter"
+
+# inputs:
+
+# outputs:
+
+runs:
+  using: "docker"
+  image: "Dockerfile"

@@ -1,67 +1,65 @@
-/* eslint-disable camelcase */
-
-const {Toolkit} = require('actions-toolkit');
+const {Toolkit} = require('actions-toolkit')
 
 Toolkit.run(async tools => {
-  const pkg = tools.getPackageJSON();
-  const {sha: head_sha, action: title} = tools.context;
-  const annotations = [];
-  const summary = [];
+  const pkg = tools.getPackageJSON()
+  const {head_sha, title} = tools.context
+  const annotations = []
+  const summary = []
 
-  let warningCount = 0;
-  let errorCount = 0;
-  let conclusion = 'success';
-  let results;
+  let warningCount = 0
+  let errorCount = 0
+  let conclusion = 'success'
+  let results
 
   try {
-    const {eslintConfig, xo} = pkg;
-    const optionsXo = ['--reporter=json'];
+    const {eslintConfig, xo} = pkg
+    const optionsXo = ['--reporter=json']
 
     if (eslintConfig.plugins.includes('prettier') || xo.prettier) {
-      optionsXo.push('--prettier');
+      optionsXo.push('--prettier')
     }
 
     const result = await tools.runInWorkspace('xo', optionsXo, {
       reject: false
-    });
+    })
 
-    [...results] = JSON.parse(result.stdout);
+    ;[...results] = JSON.parse(result.stdout)
   } catch (error) {
     // XO will respond with a rejected Promise if errors/warnings are found
-    [...results] = JSON.parse(error.stdout);
+    ;[...results] = JSON.parse(error.stdout)
   }
 
   for (const result of results) {
-    const {filePath, messages} = result;
+    const {filePath, messages} = result
 
-    warningCount += Number(result.warningCount);
-    errorCount += Number(result.errorCount);
+    warningCount += Number(result.warningCount)
+    errorCount += Number(result.errorCount)
 
     for (const msg of messages) {
-      const {severity, ruleId: raw_details} = msg;
-      let {line, endLine, message} = msg;
-      let annotation_level;
+      const {severity, raw_details} = msg
+      let {line, endLine, message} = msg
+      let annotationLevel
 
       // Sanity checks
-      message = message.replace(/["']/g, '`');
+      message = message.replace(/["']/g, '`')
       if (encodeURI(message).split(/%..|./).length - 1 >= 64) {
-        message = message.substring(0, 60) + '...';
+        message = `${message.slice(0, 60)}...`
       }
 
       switch (severity) {
         case 1:
-          annotation_level = 'warning';
-          break;
+          annotationLevel = 'warning'
+          break
         case 2:
-          annotation_level = 'failure';
-          break;
+          annotationLevel = 'failure'
+          break
         default:
-          annotation_level = 'notice';
+          annotationLevel = 'notice'
       }
 
-      line = line || 1;
+      line = line || 1
       if (endLine < line || !endLine) {
-        endLine = line;
+        endLine = line
       }
       // EO - Sanity checks
 
@@ -69,21 +67,21 @@ Toolkit.run(async tools => {
         path: filePath.replace(`${tools.workspace}/`, ''),
         start_line: line,
         end_line: endLine,
-        annotation_level,
+        annotation_level: annotationLevel,
         message,
         raw_details
-      });
+      })
     }
   }
 
   if (warningCount > 0) {
-    summary.push(`:warning: Found ${warningCount} warnings.`);
-    conclusion = 'neutral';
+    summary.push(`:warning: Found ${warningCount} warnings.`)
+    conclusion = 'neutral'
   }
 
   if (errorCount > 0) {
-    summary.push(`:x: Found ${errorCount} errors.`);
-    conclusion = 'failure';
+    summary.push(`:x: Found ${errorCount} errors.`)
+    conclusion = 'failure'
   }
 
   try {
@@ -95,38 +93,32 @@ Toolkit.run(async tools => {
       conclusion,
       output: {
         title,
-        summary:
-          conclusion === 'success'
-            ? 'XO found no lint in your code.'
-            : 'XO found lint in your code.',
-        text:
-          conclusion === 'success'
-            ? ':tada: XO found no lint in your code.'
-            : summary.join('\n'),
+        summary: conclusion === 'success' ? 'XO found no lint in your code.' : 'XO found lint in your code.',
+        text: conclusion === 'success' ? ':tada: XO found no lint in your code.' : summary.join('\n'),
         annotations
       }
-    };
+    }
 
-    await tools.github.checks.create(optionsCreate);
+    await tools.github.checks.create(optionsCreate)
   } catch (error) {
     // <Debug>
-    tools.log.debug(error);
-    console.trace(error);
-    console.debug(error.request.request.validate);
+    tools.log.debug(error)
+    console.trace(error)
+    console.debug(error.request.request.validate)
     // </Debug>
 
-    tools.exit.failure(error);
+    tools.exit.failure(error)
   }
 
   if (errorCount > 0) {
-    tools.exit.failure(':x: Lint errors found!');
-    return;
+    tools.exit.failure(':x: Lint errors found!')
+    return
   }
 
   if (warningCount > 0) {
-    tools.exit.neutral(':warning: Lint warnings found!');
-    return;
+    tools.exit.neutral(':warning: Lint warnings found!')
+    return
   }
 
-  tools.exit.success(':white_check_mark: No lint found!');
-});
+  tools.exit.success(':white_check_mark: No lint found!')
+})

@@ -1,6 +1,6 @@
 {
   "name": "xo-action",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "description": "GitHub Action ❤️ JavaScript happiness style linter",
   "keywords": [
@@ -18,57 +18,53 @@
     "url": "https://github.com/stoe/xo-action/issues"
   },
   "engines": {
-    "node": ">=10.15",
-    "npm": ">=6.4"
+    "node": ">=12.14",
+    "npm": ">=6.13"
   },
   "main": "index.js",
   "scripts": {
     "test": "xo"
   },
   "dependencies": {
-    "actions-toolkit": "^2.1.0",
-    "xo": "^0.24.0"
+    "actions-toolkit": "^2.2.0",
+    "xo": "^0.25.3"
   },
   "devDependencies": {
     "babel-eslint": "^10.0.3",
-    "eslint": "^5.16.0",
-    "eslint-config-prettier": "^6.1.0",
-    "eslint-config-xo-space": "^0.21.0",
-    "eslint-plugin-prettier": "^3.1.0",
-    "prettier": "^1.18"
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-config-xo-space": "^0.22.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-plugin-github": "^3.4.0",
+    "prettier": "^1.19"
   },
   "eslintConfig": {
     "env": {
       "es6": true,
       "node": true
     },
-    "parser": "babel-eslint",
     "extends": [
       "prettier"
     ],
     "plugins": [
-      "prettier"
+      "prettier",
+      "plugin:github/es6",
+      "plugin:github/node"
     ],
+    "parser": "babel-eslint",
     "rules": {
-      "prettier/prettier": [
-        "error",
-        {
-          "singleQuote": true,
-          "semi": true,
-          "useTabs": false,
-          "bracketSpacing": false
-        }
-      ],
       "camelcase": [
         "error",
         {
-          "properties": "never"
+          "properties": "never",
+          "ignoreDestructuring": true
         }
       ]
     }
   },
   "xo": {
+    "prettier": true,
     "space": true,
-    "prettier": true
+    "semicolon": false
   }
 }
