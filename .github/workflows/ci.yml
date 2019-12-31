@@ -30,8 +30,8 @@ jobs:
           path: node_modules
           key: ${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
       - name: Build
-        run: npm ci --ignore-scripts --pure-lockfile
-        if: steps.node-cache.outputs.cache-hit != 'true'
+        run: npm ci
+        # if: steps.node-cache.outputs.cache-hit != 'true'
       - name: Test
         run: npm test
         env:
