@@ -31,8 +31,8 @@
     "url": "https://github.com/stoe/xo-action/issues"
   },
   "engines": {
-    "node": ">=12.14",
-    "npm": ">=6.13"
+    "node": ">=10",
+    "npm": ">=6"
   },
   "main": "index.js",
   "scripts": {
