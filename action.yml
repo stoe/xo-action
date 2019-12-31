@@ -9,10 +9,10 @@ inputs:
 
 # outputs:
 
-runs:
-  using: 'docker'
-  image: 'Dockerfile'
-
 branding:
   icon: 'x'
   color: 'white'
+
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
