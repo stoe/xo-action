@@ -2,7 +2,7 @@ FROM node:slim
 
 COPY package*.json ./
 
-RUN npm install --production
+RUN yarn install
 
 COPY . .
 
