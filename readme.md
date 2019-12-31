@@ -1,6 +1,6 @@
 # xo-action
 
-> ❤️ JavaScript happiness style linter GitHub Action
+> GitHub Action ❤️ JavaScript happiness style linter
 
 
 ## Usage
@@ -14,6 +14,6 @@ To use the action simply add the following lines to your `.github/workflows/main
 ```
 
 
-## License [![license](https://img.shields.io/github/license/stoe/xo-action.svg)](https://github.com/stoe/xo-action/blob/master/license)
+## License
 
 MIT © [Stefan Stölzle](https://github.com/stoe)
