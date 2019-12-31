@@ -29,10 +29,10 @@ const runXo = async options => {
 
 const updateCheck = async ({summary, conclusion, annotations}) => {
   const client = new github.GitHub(process.env.GITHUB_TOKEN)
-  const {sha: head_sha, action: title, ref} = github.context
+  const {sha, action, ref} = github.context
   const {owner, repo} = github.context.repo
 
-  const checkRuns = await client.checks.listForRef({owner, repo, ref}).then(({data}) => data.check_runs)
+  let checkRuns = await client.checks.listForRef({owner, repo, ref}).then(({data}) => data.check_runs)
 
   // User must provide the check run's name
   // so we can match it up with the correct run
@@ -47,11 +47,11 @@ const updateCheck = async ({summary, conclusion, annotations}) => {
     await client.checks.create({
       ...github.context.repo,
       name: checkName,
-      head_sha,
+      head_sha: sha,
       started_at: new Date().toISOString()
     })
 
-    const checkRuns = await client.checks.listForRef({owner, repo, ref}).then(({data}) => data.check_runs)
+    checkRuns = await client.checks.listForRef({owner, repo, ref}).then(({data}) => data.check_runs)
 
     checkNameRun = checkRuns.find(check => check.name === checkName)
   }
@@ -64,7 +64,7 @@ const updateCheck = async ({summary, conclusion, annotations}) => {
     completed_at: new Date().toISOString(),
     conclusion,
     output: {
-      title,
+      title: action,
       summary: conclusion === 'success' ? 'XO found no lint in your code.' : 'XO found lint in your code.',
       text: conclusion === 'success' ? ':tada: XO found no lint in your code.' : summary.join('\n'),
       annotations: annotations.slice(0, 49)
@@ -101,25 +101,25 @@ const run = async () => {
       errorCount += Number(result.errorCount)
 
       for (const msg of messages) {
-        const {severity, ruleId: raw_details} = msg
+        const {severity, ruleId} = msg
         let {line, endLine} = msg
-        let annotation_level
+        let annotationLevel
 
         // Sanity checks
         let message = msg.message.replace(/["']/g, '`')
         if (encodeURI(message).split(/%..|./).length - 1 >= 64) {
-          message = message.substring(0, 60) + '...'
+          message = `${message.slice(0, 60)}...`
         }
 
         switch (severity) {
           case 1:
-            annotation_level = 'warning'
+            annotationLevel = 'warning'
             break
           case 2:
-            annotation_level = 'failure'
+            annotationLevel = 'failure'
             break
           default:
-            annotation_level = 'notice'
+            annotationLevel = 'notice'
         }
 
         line = line || 1
@@ -132,9 +132,9 @@ const run = async () => {
           path: filePath.replace(`${workspace}/`, ''),
           start_line: line,
           end_line: endLine,
-          annotation_level,
+          annotation_level: annotationLevel,
           message,
-          raw_details
+          raw_details: ruleId
         })
       }
     }

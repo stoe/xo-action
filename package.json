@@ -12,8 +12,21 @@
   ],
   "license": "MIT",
   "homepage": "https://github.com/stoe/xo-action#readme",
-  "author": "Stefan Stölzle <stefan@github.com> (stefan.stoelzle.me)",
-  "repository": "git+ssh://git@github.com/stoe/xo-action.git",
+  "author": {
+    "name": "Stefan Stölzle",
+    "email": "stefan@github.com",
+    "url": "https://github.com/stoe"
+  },
+  "contributors": [
+    {
+      "name": "Alexis Tyler",
+      "url": "https://github.com/OmgImAlexis"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stoe/xo-action.git"
+  },
   "bugs": {
     "url": "https://github.com/stoe/xo-action/issues"
   },
@@ -23,7 +36,8 @@
   },
   "main": "index.js",
   "scripts": {
-    "lint": "xo"
+    "lint": "xo",
+    "test": "github-lint"
   },
   "dependencies": {
     "@actions/core": "^1.2.0",
@@ -32,41 +46,12 @@
     "xo": "^0.25.3"
   },
   "devDependencies": {
-    "babel-eslint": "^10.0.3",
     "eslint": "^6.8.0",
-    "eslint-config-prettier": "^6.9.0",
-    "eslint-config-xo-space": "^0.22.0",
-    "eslint-plugin-prettier": "^3.1.2",
     "eslint-plugin-github": "^3.4.0",
     "prettier": "^1.19"
   },
-  "eslintConfig": {
-    "env": {
-      "es6": true,
-      "node": true
-    },
-    "extends": [
-      "prettier"
-    ],
-    "plugins": [
-      "prettier",
-      "plugin:github/es6",
-      "plugin:github/node"
-    ],
-    "parser": "babel-eslint",
-    "rules": {
-      "camelcase": [
-        "error",
-        {
-          "properties": "never",
-          "ignoreDestructuring": true
-        }
-      ]
-    }
-  },
   "xo": {
-    "prettier": true,
-    "space": true,
-    "semicolon": false
+    "semicolon": false,
+    "space": true
   }
 }
