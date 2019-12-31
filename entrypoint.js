@@ -36,7 +36,7 @@ const updateCheck = async ({summary, conclusion, annotations}) => {
 
   // User must provide the check run's name
   // so we can match it up with the correct run
-  const checkName = core.getInput('name') || 'lint'
+  const checkName = core.getInput('name')
   let checkNameRun = checkRuns.find(check => check.name === checkName)
 
   // Bail if we have more than one check and there's no named run found

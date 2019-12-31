@@ -42,5 +42,3 @@ jobs:
         uses: stoe/xo-action@1c8852a
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          name: Test action against own code

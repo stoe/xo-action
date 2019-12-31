@@ -1,7 +1,11 @@
 name: 'xo-action'
 description: 'GitHub Action ❤️ JavaScript happiness style linter'
 
-# inputs:
+inputs:
+  name:
+    description: ''
+    required: false
+    default: 'lint'
 
 # outputs:
 
