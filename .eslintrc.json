@@ -4,7 +4,16 @@
     "camelcase": [
       "error",
       {
-        "properties": "never"
+        "allow": [
+          "annotation_level",
+          "check_run_id",
+          "completed_at",
+          "end_line",
+          "head_sha",
+          "raw_details",
+          "started_at",
+          "start_line"
+        ]
       }
     ]
   }

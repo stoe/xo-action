@@ -51,6 +51,7 @@
     "prettier": "^1.19"
   },
   "xo": {
+    "extends": ".eslintrc.json",
     "semicolon": false,
     "space": true
   }
