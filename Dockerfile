@@ -1,8 +1,9 @@
-FROM node:12-alpine
+FROM node:slim
 
 COPY package*.json ./
-RUN npm ci
+
+RUN npm install --production
+
 COPY . .
 
-# ENTRYPOINT ["node", "/entrypoint.js"]
-CMD ["ls -la"]
+ENTRYPOINT ["node", "/entrypoint.js"]
