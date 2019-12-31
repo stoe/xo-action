@@ -49,7 +49,7 @@ jobs:
           path: node_modules
           key: 12.x-${{ hashFiles('package-lock.json') }}
       - name: Lint
-        uses: stoe/xo-action@master
+        uses: stoe/xo-action@b4e3acc
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
