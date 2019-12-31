@@ -11,7 +11,7 @@ const runXo = async options => {
   let resultString = ''
 
   const parseResults = data => {
-    resultString += data.toString()
+    resultString += data.toString();
   }
 
   await exec.exec(xoPath, options, {
