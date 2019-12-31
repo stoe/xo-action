@@ -1,124 +1,175 @@
-const {Toolkit} = require('actions-toolkit')
+const path = require('path')
+const core = require('@actions/core')
+const exec = require('@actions/exec')
+const github = require('@actions/github')
 
-Toolkit.run(async tools => {
-  const pkg = tools.getPackageJSON()
-  const {head_sha, title} = tools.context
-  const annotations = []
-  const summary = []
+const workspace = process.env.GITHUB_WORKSPACE
+const xoPath = path.join(workspace, 'node_modules', '.bin', 'xo')
 
-  let warningCount = 0
-  let errorCount = 0
-  let conclusion = 'success'
-  let results
+// Returns results from xo command
+const runXo = async options => {
+  let resultString = ''
 
-  try {
-    const {eslintConfig, xo} = pkg
-    const optionsXo = ['--reporter=json']
+  const parseResults = data => {
+    resultString += data.toString()
+  }
 
-    if (eslintConfig.plugins.includes('prettier') || xo.prettier) {
-      optionsXo.push('--prettier')
+  await exec.exec(xoPath, options, {
+    cwd: workspace,
+    ignoreReturnCode: true,
+    silent: true,
+    listeners: {
+      stdout: parseResults,
+      stderr: parseResults
     }
+  })
 
-    const result = await tools.runInWorkspace('xo', optionsXo, {
-      reject: false
+  return JSON.parse(resultString)
+}
+
+const updateCheck = async ({summary, conclusion, annotations}) => {
+  const client = new github.GitHub(process.env.GITHUB_TOKEN)
+  const {sha: head_sha, action: title, ref} = github.context
+  const {owner, repo} = github.context.repo
+
+  const checkRuns = await client.checks.listForRef({owner, repo, ref}).then(({data}) => data.check_runs)
+
+  // User must provide the check run's name
+  // so we can match it up with the correct run
+  const checkName = core.getInput('check_name') || 'lint'
+  let checkNameRun = checkRuns.find(check => check.name === checkName)
+
+  // Bail if we have more than one check and there's no named run found
+  if (checkRuns.length >= 2 && !checkNameRun) {
+    core.debug(`Couldn't find a check run matching "${checkName}".`)
+
+    // Create new check run as we couldn't find a matching one.
+    await client.checks.create({
+      ...github.context.repo,
+      name: checkName,
+      head_sha,
+      started_at: new Date().toISOString()
     })
 
-    ;[...results] = JSON.parse(result.stdout)
-  } catch (error) {
-    // XO will respond with a rejected Promise if errors/warnings are found
-    ;[...results] = JSON.parse(error.stdout)
+    const checkRuns = await client.checks.listForRef({owner, repo, ref}).then(({data}) => data.check_runs)
+
+    checkNameRun = checkRuns.find(check => check.name === checkName)
   }
 
-  for (const result of results) {
-    const {filePath, messages} = result
+  const checkRunId = checkRuns.length >= 2 ? checkNameRun.id : checkRuns[0].id
 
-    warningCount += Number(result.warningCount)
-    errorCount += Number(result.errorCount)
-
-    for (const msg of messages) {
-      const {severity, raw_details} = msg
-      let {line, endLine, message} = msg
-      let annotationLevel
-
-      // Sanity checks
-      message = message.replace(/["']/g, '`')
-      if (encodeURI(message).split(/%..|./).length - 1 >= 64) {
-        message = `${message.slice(0, 60)}...`
-      }
-
-      switch (severity) {
-        case 1:
-          annotationLevel = 'warning'
-          break
-        case 2:
-          annotationLevel = 'failure'
-          break
-        default:
-          annotationLevel = 'notice'
-      }
-
-      line = line || 1
-      if (endLine < line || !endLine) {
-        endLine = line
-      }
-      // EO - Sanity checks
-
-      annotations.push({
-        path: filePath.replace(`${tools.workspace}/`, ''),
-        start_line: line,
-        end_line: endLine,
-        annotation_level: annotationLevel,
-        message,
-        raw_details
-      })
+  await client.checks.update({
+    ...github.context.repo,
+    check_run_id: checkRunId,
+    completed_at: new Date().toISOString(),
+    conclusion,
+    output: {
+      title,
+      summary: conclusion === 'success' ? 'XO found no lint in your code.' : 'XO found lint in your code.',
+      text: conclusion === 'success' ? ':tada: XO found no lint in your code.' : summary.join('\n'),
+      annotations: annotations.slice(0, 49)
     }
-  }
+  })
+}
 
-  if (warningCount > 0) {
-    summary.push(`:warning: Found ${warningCount} warnings.`)
-    conclusion = 'neutral'
-  }
-
-  if (errorCount > 0) {
-    summary.push(`:x: Found ${errorCount} errors.`)
-    conclusion = 'failure'
-  }
-
+const run = async () => {
   try {
-    const optionsCreate = {
-      ...tools.context.repo,
-      name: 'xo',
-      head_sha,
-      completed_at: new Date().toISOString(),
-      conclusion,
-      output: {
-        title,
-        summary: conclusion === 'success' ? 'XO found no lint in your code.' : 'XO found lint in your code.',
-        text: conclusion === 'success' ? ':tada: XO found no lint in your code.' : summary.join('\n'),
-        annotations
+    const annotations = []
+    const summary = []
+
+    let warningCount = 0
+    let errorCount = 0
+    let conclusion = 'success'
+
+    const pkgPath = path.join(workspace, 'package.json')
+    const {eslintConfig = {}, xo = {}} = require(pkgPath)
+
+    // Only run with prettier flag if needed
+    const needsPrettier =
+      (eslintConfig && eslintConfig.plugins && eslintConfig.plugins.includes('prettier')) || xo.prettier
+
+    // Run xo command
+    const results = await runXo(['--reporter=json', needsPrettier ? '--prettier' : '']).catch(error => {
+      core.setFailed(error.message)
+      return []
+    })
+
+    for (const result of results) {
+      const {filePath, messages} = result
+
+      warningCount += Number(result.warningCount)
+      errorCount += Number(result.errorCount)
+
+      for (const msg of messages) {
+        const {severity, ruleId: raw_details} = msg
+        let {line, endLine} = msg
+        let annotation_level
+
+        // Sanity checks
+        let message = msg.message.replace(/["']/g, '`')
+        if (encodeURI(message).split(/%..|./).length - 1 >= 64) {
+          message = message.substring(0, 60) + '...'
+        }
+
+        switch (severity) {
+          case 1:
+            annotation_level = 'warning'
+            break
+          case 2:
+            annotation_level = 'failure'
+            break
+          default:
+            annotation_level = 'notice'
+        }
+
+        line = line || 1
+        if (endLine < line || !endLine) {
+          endLine = line
+        }
+        // EO - Sanity checks
+
+        annotations.push({
+          path: filePath.replace(`${workspace}/`, ''),
+          start_line: line,
+          end_line: endLine,
+          annotation_level,
+          message,
+          raw_details
+        })
       }
     }
 
-    await tools.github.checks.create(optionsCreate)
+    if (warningCount > 0) {
+      summary.push(`:warning: Found ${warningCount} warning${warningCount === 1 ? '' : 's'}.`)
+      conclusion = 'neutral'
+    }
+
+    if (errorCount > 0) {
+      summary.push(`:x: Found ${errorCount} error${errorCount === 1 ? '' : 's'}.`)
+      conclusion = 'failure'
+    }
+
+    await updateCheck({summary, conclusion, annotations}).catch(error => {
+      core.setFailed(error.message)
+    })
+
+    if (errorCount > 0) {
+      core.setFailed(':x: Lint errors found!')
+      return
+    }
+
+    if (warningCount > 0) {
+      // Currently doesn't work
+      // See https://github.com/actions/toolkit/tree/master/packages/core#exit-codes
+      // core.setNeutral(':x: Lint warnings found.');
+      core.warning(':x: Lint warnings found.')
+      return
+    }
+
+    // Tools.exit.success(':white_check_mark: No lint found!');
   } catch (error) {
-    // <Debug>
-    tools.log.debug(error)
-    console.trace(error)
-    console.debug(error.request.request.validate)
-    // </Debug>
-
-    tools.exit.failure(error)
+    core.setFailed(error.message)
   }
+}
 
-  if (errorCount > 0) {
-    tools.exit.failure(':x: Lint errors found!')
-    return
-  }
-
-  if (warningCount > 0) {
-    tools.exit.neutral(':warning: Lint warnings found!')
-    return
-  }
-
-  tools.exit.success(':white_check_mark: No lint found!')
-})
+run()

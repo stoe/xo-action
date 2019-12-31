@@ -23,10 +23,12 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "xo"
+    "lint": "xo"
   },
   "dependencies": {
-    "actions-toolkit": "^2.2.0",
+    "@actions/core": "^1.2.0",
+    "@actions/exec": "^1.0.2",
+    "@actions/github": "^2.0.0",
     "xo": "^0.25.3"
   },
   "devDependencies": {

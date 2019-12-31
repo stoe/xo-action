@@ -1,0 +1,40 @@
+name: Test my code
+
+on: push
+
+jobs:
+  lint:
+    name: Lint code on Node v${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['10', '12']
+
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@master
+        with:
+          version: ${{ matrix.node }}
+      - run: npm ci
+      - run: npm run lint
+
+  test:
+    name: Test action against own code on Node v${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['10', '12']
+
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@master
+        with:
+          version: ${{ matrix.node }}
+      - run: npm ci
+      - name: Lint
+        # uses: stoe/xo-action@master
+        uses: stoe/laughing-umbrella@OmgImAlexis-master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          check_name: Test action against own code
