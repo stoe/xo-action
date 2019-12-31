@@ -51,6 +51,9 @@
     "eslint-plugin-github": "^3.4.0",
     "prettier": "^1.19"
   },
+  "resolutions": {
+    "set-value": ">=2.0.1"
+  },
   "xo": {
     "extends": ".eslintrc.json",
     "semicolon": false,
