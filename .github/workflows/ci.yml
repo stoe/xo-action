@@ -39,6 +39,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Lint
-        uses: stoe/xo-action@1c8852a
+        uses: stoe/xo-action@c7b6b32
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
