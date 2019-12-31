@@ -1,7 +1,9 @@
 FROM node:slim
 
-COPY package*.json ./
+COPY package.json ./
+COPY yarn.lock ./
 
+RUN yarn add xo
 RUN yarn install
 
 COPY . .
