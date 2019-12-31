@@ -37,7 +37,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "xo",
-    "test": "github-lint"
+    "test": "github-lint",
+    "start": "node ./entrypoint.js"
   },
   "dependencies": {
     "@actions/core": "^1.2.0",

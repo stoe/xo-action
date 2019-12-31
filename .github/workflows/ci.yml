@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: ['10.x', '12.x', '13.x']
+        node-version: ['10.x', '12.x']
 
     steps:
       - name: Checkout
@@ -19,15 +19,15 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Cache
         uses: actions/cache@v1
-        id: node-cache
+        id: yarn-cache
         with:
           path: node_modules
-          key: ${{ matrix.node-version }}-${{ hashFiles('package-lock.json') }}
+          key: ${{ matrix.node-version }}-${{ hashFiles('**/yarn.lock') }}
       - name: Build
-        run: npm ci
-        # if: steps.node-cache.outputs.cache-hit != 'true'
+        run: yarn
+        if: steps.yarn-cache.outputs.cache-hit != 'true'
       - name: Test
-        run: npm test
+        run: yarn test
         env:
           CI: true
 
@@ -39,6 +39,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
       - name: Lint
-        uses: stoe/xo-action@c7b6b32
+        uses: stoe/xo-action@stoe/actions-v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
