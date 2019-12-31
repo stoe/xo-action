@@ -3,7 +3,7 @@ const core = require('@actions/core')
 const exec = require('@actions/exec')
 const github = require('@actions/github')
 
-const workspace = process.env.GITHUB_WORKSPACE
+const workspace = process.env.GITHUB_WORKSPACE || process.env.PWD
 const xoPath = path.join(workspace, 'node_modules', '.bin', 'xo')
 
 // Returns results from xo command
