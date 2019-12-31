@@ -1,12 +1,6 @@
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
-
 name: Node CI
+
+on: [push]
 
 jobs:
   test:
